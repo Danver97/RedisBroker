@@ -59,9 +59,9 @@ The "event picking" is done atomically and consists of:
 
 After processing the event, the event is deleted from the *processingList*.
 
-In case of processing failure or microservice's instace failure the event will be reinserted in the *publishedList* and another instace will process it.
+In case of processing failure or microservice's instace failure the event will be reinserted in the *publishedList* and another instance will process it.
 
-This is achieved because on the *processingNotification* event, each instance of the microservice register a new timeout of 100ms (for now it's an arbitrary value, it will be customizable). After that if the processing event is still in the *processingList* will be atomically removed and reinserted at the front of the *publishedList*. During the remove and reinsert a new *eventPublished* redis event is raised atomically so that other microservice instances are notified.
+This is achieved because on the *processingNotification* event, each instance of the microservice register a new timeout of 100ms (for now it's an arbitrary value, it will be customizable). After that if the processing event is still in the *processingList* will be atomically removed and reinserted at the front of the *publishedList*. During the removing and reinsertion a new *eventPublished* redis event is raised atomically so that other microservice instances are notified.
 
 ## Todo
 - More detailed informations on APIs.
