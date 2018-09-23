@@ -10,7 +10,7 @@ This means that to be effective and fault tolerant needs multiple instaces of th
 
 ### Drawbacks
 - Not recommend for really large instaces number and very-intensive event communication 
-because it can lead to too many (unnecessary) calls to redis that i'm not sure if redis can manage.
+because it can lead to too many (unnecessary) calls to redis that I'm not sure if redis can manage them.
 This is a very small experimental but perfectly working project. 
 It's really easy to integrate and use it but a good scalability it's not assured.
 
