@@ -49,3 +49,4 @@ broker.on(topic, cb);
 ## Todo
 - Explain how it works
 - More detailed informations on APIs.
+- Publish everything on npm.
