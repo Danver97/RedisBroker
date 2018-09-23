@@ -46,7 +46,17 @@ To react to a new event of `topic`:
 broker.on(topic, cb);
 ```
 
+## How it works
+Each subscriber to a certain topic subscribes using RedisEvents to that topic.
+When `broker.publishEvent(event)` is called RedisBroker fetch every subscriber of that event's topic and push atomically the serialized event to every subscriber's *publishedList* and publish a redis event with the topic name as a message.
+Each subscriber, receiveing a new redis event, calls `broker.pick(cb)` processing the event in the callback function.
+The "event picking" is done atomically and consists of:
+- Removing the first event from the *publishedList* and pushing it in the *processingList*
+- Publish a new *processingNotification* redis event.
+After processing the event, the event is deleted from the *processingList*.
+In case of processing failure or microservice's instace failure the event will be reinserted in the *publishedList* and another instace will process it.
+This is achieved because on the *processingNotification* event, each instance of the microservice register a new timeout of 100ms. After that if the processing event is still in the *processingList* will be atomically removed and reinserted at the front of the *publishedList*. During the remove and reinsert a new *eventPublished* redis event is raised atomically so that other microservice instances are notified.
+
 ## Todo
-- Explain how it works
 - More detailed informations on APIs.
 - Publish everything on npm.
