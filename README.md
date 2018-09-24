@@ -33,8 +33,9 @@ This is achieved because on the *processingNotification* event, each instance of
 
 ## Installation
 This module is currently not on npm. 
-To install it copy this repository it to your folder and check that your project is using npm's 'ioredis' module
+To install it copy this repository it to your folder and check that your project is using npm's [ioredis](https://www.npmjs.com/package/ioredis) module
 (if not just `npm install ioredis --save`).
+If you want to test it check that you project is using npm's [mocha](https://www.npmjs.com/package/mocha) module installed globally (`npm install mocha -g`).
 
 ## How to use it
 Usage:
@@ -42,11 +43,20 @@ Usage:
 const RedisBroker = require(/* path to RedisBroker folder */);
 const broker = RedisBroker();
 ```
+The module create a new forked process (called *checker process*) responsible to check that lost events in *processing* state are re-enqued in the *publishedList*.
+
+`RedisBroker` function takes a `config` object argument. For now it's only used for testing purposes, but in the future will provide more configuration options.
+
+**Note:** every time the function `RedisBroker` is called no new instances of redis client are created and no new *checker processes* are created.
 
 To publish an event:
 ```js
 broker.publishEvent(event);
 ```
+The `event` object must have the following fields:
+- id
+- topic
+
 
 To pick an event:
 ```js
@@ -64,5 +74,4 @@ broker.on(topic, cb);
 ```
 
 ## Todo
-- More detailed informations on APIs.
 - Publish everything on npm.
