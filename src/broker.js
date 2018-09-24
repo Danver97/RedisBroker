@@ -20,57 +20,15 @@ function getChecker(env) {
 const chekerEnv = { MICROSERVICE_NAME: keys.microserviceName };
 const checker = getChecker(chekerEnv);
 
-class EventBroker {
-    constructor(notFork) {
-        if (!notFork)
-            this.checker = getChecker(chekerEnv);
-        this.redis = ioredis.createClient();
-        this.sub = ioredis.createClient();
-    }
-
-    async publishEvent(event) {
-        const subscribers = await redis.lrange(keys.subscribersList(event.topic), 0, 10000000000);
-
-        const multi = this.redis.multi();
-        multi.hmset(event.id, ioredisUtil.flattenObject(event));
-        for (let i = 0; i < subscribers.length; i++)
-            multi.lpush(keys.subscriberPublishedList(subscribers[i]), event.id);
-        multi.publish(event.topic, event.id);
-
-        const result = await multi.exec();
-        return result;
-    }
-
-    async pick(cb) {
-        const eventId = await redis.rpoplpush(keys.publishedList, keys.processingList);
-        const multi = this.redis.multi();
-        multi.hgetall(eventId);
-        multi.publish(keys.processingListTopicNotif, eventId);
-        // console.log('result');
-        const result = await multi.exec();
-        const event = result[0][1];
-        cb(event);
-        await this.redis.lrem(keys.processingList, 1, eventId);
-    }
-
-    async subscribe(topic) {
-        if (this.checker)
-            this.checker.send(keys.processingListTopicNotif);
-        this.sub.subscribe(topic);
-    }
-
-    on(pubSubEvent, cb) {
-        this.sub.on(pubSubEvent, cb);
-    }
-
-    mockCheckerFailure() {
-        this.checker.send('fail');
-    }
-}
+const globalSelf = {
+    checker,
+    redis,
+    sub,
+};
 
 async function publishEvent(event) {
-    const subscribers = await redis.lrange(keys.subscribersList(event.topic), 0, 10000000000);
-    const multi = redis.multi();
+    const subscribers = await this.redis.smembers(keys.subscribersList(event.topic));
+    const multi = this.redis.multi();
     multi.hmset(event.id, ioredisUtil.flattenObject(event));
     for (let i = 0; i < subscribers.length; i++)
         multi.lpush(keys.subscriberPublishedList(subscribers[i]), event.id);
@@ -80,35 +38,77 @@ async function publishEvent(event) {
 }
 
 async function pick(cb) {
-    const event = ioredisUtil.buildObject(await redis.pickPublishAndReturn(keys.publishedList, keys.processingList, keys.processingListTopicNotif));
+    const event = ioredisUtil.buildObject(
+        await this.redis.pickPublishAndReturn(keys.publishedList, keys.processingList, keys.processingListTopicNotif),
+    );
     cb(event);
-    await redis.lrem(keys.processingList, 1, event.id);
+    await this.redis.lrem(keys.processingList, 1, event.id);
 }
 
 function mockCheckerFailure() {
-    checker.send('fail');
+    this.checker.send('fail');
 }
 
 async function subscribe(topic) {
-    checker.send(keys.processingListTopicNotif);
+    this.redis.sadd(keys.subscribersList(topic), keys.microserviceName);
+    if (this.checker)
+        this.checker.send(keys.processingListTopicNotif);
     // checker.send(topic);
-    sub.subscribe(topic);
+    this.sub.subscribe(topic);
 }
 
-function on(pubSubEvent, cb) {
-    sub.on(pubSubEvent, cb);
+function on(topic, cb) {
+    this.sub.on(topic, cb);
+}
+
+class EventBroker {
+    constructor(notFork) {
+        if (!notFork)
+            this.checker = getChecker(chekerEnv);
+        this.redis = ioredis.createClient();
+        this.sub = ioredis.createClient();
+        this.redis.defineCommand('pickPublishAndReturn', {
+            numberOfKeys: 3,
+            lua: pickAndPublishPicked,
+        });
+    }
+
+    async publishEvent(event) {
+        const func = publishEvent.bind(this);
+        return func(event);
+    }
+
+    async pick(cb) {
+        const func = pick.bind(this);
+        return func(cb);
+    }
+
+    async subscribe(topic) {
+        const func = subscribe.bind(this);
+        return func(topic);
+    }
+
+    on(pubSubEvent, cb) {
+        const func = on.bind(this);
+        return func(pubSubEvent, cb);
+    }
+
+    mockCheckerFailure() {
+        const func = mockCheckerFailure.bind(this);
+        return func();
+    }
 }
 
 function exportEventBrokerObject(config) {
     const conf = config || {};
     return {
         brokerClient: redis,
-        publishEvent,
-        subscribe,
-        on,
-        pick,
+        publishEvent: publishEvent.bind(globalSelf),
+        subscribe: subscribe.bind(globalSelf),
+        on: on.bind(globalSelf),
+        pick: pick.bind(globalSelf),
         EventBroker: conf.NODE_ENV === 'test' ? EventBroker : undefined,
-        mockCheckerFailure: conf.NODE_ENV === 'test' ? mockCheckerFailure : undefined,
+        mockCheckerFailure: conf.NODE_ENV === 'test' ? mockCheckerFailure.bind(globalSelf) : undefined,
     };
 }
 

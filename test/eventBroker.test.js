@@ -44,7 +44,7 @@ describe('Redis eventBroker unit test', function () {
             await redisEventBroker.subscribe(eventProva.topic);
             await redis.flushall();
             const pipeline = redis.pipeline();
-            subscribers.forEach(s => pipeline.lpush(keys.subscribersList(eventProva.topic), s));
+            subscribers.forEach(s => pipeline.sadd(keys.subscribersList(eventProva.topic), s));
             await pipeline.exec();
             
             // Publish event
@@ -98,7 +98,7 @@ describe('Redis eventBroker unit test', function () {
             await Promise.all([prom1, prom2]);
             await redis.flushall();
             const pipeline = redis.pipeline();
-            subscribers.forEach(s => pipeline.lpush(keys.subscribersList(eventProva.topic), s));
+            subscribers.forEach(s => pipeline.sadd(keys.subscribersList(eventProva.topic), s));
             await pipeline.exec();
             await redisEventBroker.publishEvent(eventProva);
             await redisEventBroker2.publishEvent(eventProva2);
