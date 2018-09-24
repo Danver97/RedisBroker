@@ -1,15 +1,21 @@
 {
-  "name": "redis-eventbroker",
+  "name": "redis-event-broker",
   "version": "1.0.0",
   "description": "A simple redis event broker implementation",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Danver97/RedisEventBroker.git"
+  },
   "scripts": {
     "test": "mocha"
   },
   "author": "Christian Paesante",
   "license": "ISC",
   "dependencies": {
-    "ioredis": "^4.0.0",
+    "ioredis": "^4.0.0"
+  },
+  "devDependencies": {
     "mocha": "^5.2.0"
   }
 }

@@ -32,16 +32,12 @@ In case of processing failure or microservice's instace failure the event will b
 This is achieved because on the *processingNotification* event, each instance of the microservice register a new timeout of 100ms (for now it's an arbitrary value, it will be customizable). After that if the processing event is still in the *processingList* will be atomically removed and reinserted at the front of the *publishedList*. During the removing and reinsertion a new *eventPublished* redis event is raised atomically so that other microservice instances are notified.
 
 ## Installation
-This module is currently not on npm. 
-To install it copy this repository it to your folder and check that your project is using npm's [ioredis](https://www.npmjs.com/package/ioredis) module
-(if not just `npm install ioredis --save`).
-
-If you want to test it check that you project is using npm's [mocha](https://www.npmjs.com/package/mocha) module installed globally (`npm install mocha -g`).
+Run: `npm install redis-event-broker --save`
 
 ## How to use it
 ### Require
 ```js
-const RedisEventBroker = require(/* path to RedisEventBroker folder */);
+const RedisEventBroker = require('redis-event-broker');
 const broker = RedisEventBroker();
 ```
 The module create a new forked process (called *checker process*) responsible to check that lost events in *processing* state are re-enqued in the *publishedList*.
@@ -78,4 +74,4 @@ broker.on(topic, cb);
 ```
 
 ## Todo
-- Publish everything on npm.
+- Nothing to do.
