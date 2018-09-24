@@ -1,4 +1,4 @@
-# RedisBroker
+# RedisEventBroker
 A simple redis event broker implementation.
 
 This event broker is thought to be used in an event sourcing evironment. It should be used as a module inside a microservice application.
@@ -17,7 +17,7 @@ It's really easy to integrate and use it but a good scalability it's not assured
 ## How it works
 Each subscriber to a certain topic subscribes using RedisEvents to that topic.
 
-When `broker.publishEvent(event)` is called RedisBroker fetch every subscriber of that event's topic and push atomically the serialized event to every subscriber's *publishedList* and publish a redis event with the topic name as a message.
+When `broker.publishEvent(event)` is called RedisEventBroker fetch every subscriber of that event's topic and push atomically the serialized event to every subscriber's *publishedList* and publish a redis event with the topic name as a message.
 
 Each subscriber, receiveing a new redis event, calls `broker.pick(cb)` processing the event in the callback function.
 
@@ -41,14 +41,14 @@ If you want to test it check that you project is using npm's [mocha](https://www
 ## How to use it
 ### Require
 ```js
-const RedisBroker = require(/* path to RedisBroker folder */);
-const broker = RedisBroker();
+const RedisEventBroker = require(/* path to RedisEventBroker folder */);
+const broker = RedisEventBroker();
 ```
 The module create a new forked process (called *checker process*) responsible to check that lost events in *processing* state are re-enqued in the *publishedList*.
 
-`RedisBroker` function takes a `config` object argument. For now it's only used for testing purposes, but in the future will provide more configuration options.
+`RedisEventBroker` function takes a `config` object argument. For now it's only used for testing purposes, but in the future will provide more configuration options.
 
-**Note:** every time the function `RedisBroker` is called no new instances of redis client are created and no new *checker processes* are created.
+**Note:** every time the function `RedisEventBroker` is called no new instances of redis client are created and no new *checker processes* are created.
 
 ### Event publishing
 To publish an event:
