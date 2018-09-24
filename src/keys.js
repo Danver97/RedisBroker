@@ -10,6 +10,6 @@ module.exports = {
     processingList: `${microserviceName}:processingList`,
     processingListSS: `${microserviceName}:processingListSortedSet`,
     subscribersList: topic => `subscribers:${topic}`,
-    processingListTopicNotif: `${microserviceName}:processingList:pick`,
-    processingListTopicNotifSuccess: `${microserviceName}:processingList:pick:success`,
+    processingListPick: `${microserviceName}:processingList:pick`,
+    processingListPickSuccess: `${microserviceName}:processingList:pick:success`,
 };

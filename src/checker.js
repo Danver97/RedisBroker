@@ -10,6 +10,8 @@ redis.defineCommand('renqueueIfPresent', {
     lua: renqueueIfPresent,
 });
 
+const timeouts = {};
+
 /*
 async function strategy1(ch, message) {
     console.log('\tchecker!');
@@ -32,17 +34,20 @@ async function strategy1(ch, message) {
 
 async function strategy2(ch, message) {
     // console.log('\tchecker!');
-    await redis.zadd(keys.processingListSS, Date.now(), message);
-    setTimeout(async () => {
-        try {
-            if (failInTestEnv)
-                throw new Error('Mocked failure!');
-            const result = await redis.renqueueIfPresent(keys.processingList, keys.publishedList, keys.processingListSS, message);
-            console.log(`\texecuted ${result} pid: ${process.pid}`);
-        } catch (e) {
-            console.log(`\tchecker pid: ${process.pid} Mocked failure`);
-        }
-    }, 100);
+    if (ch === keys.processingListPick) {
+        await redis.zadd(keys.processingListSS, Date.now(), message);
+        timeouts[message] = setTimeout(async () => {
+            try {
+                if (failInTestEnv)
+                    throw new Error('Mocked failure!');
+                const result = await redis.renqueueIfPresent(keys.processingList, keys.publishedList, keys.processingListSS, message);
+                console.log(`\texecuted ${result} pid: ${process.pid}`);
+            } catch (e) {
+                console.log(`\tchecker pid: ${process.pid} Mocked failure`);
+            }
+        }, 100);
+    } else if (ch === keys.processingListPickSuccess)
+        clearTimeout(timeouts[message]);
 }
 
 sub.on('message', strategy2);

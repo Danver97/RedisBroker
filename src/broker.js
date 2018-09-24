@@ -39,10 +39,13 @@ async function publishEvent(event) {
 
 async function pick(cb) {
     const event = ioredisUtil.buildObject(
-        await this.redis.pickPublishAndReturn(keys.publishedList, keys.processingList, keys.processingListTopicNotif),
+        await this.redis.pickPublishAndReturn(keys.publishedList, keys.processingList, keys.processingListPick),
     );
     cb(event);
-    await this.redis.lrem(keys.processingList, 1, event.id);
+    const multi = this.redis.multi();
+    multi.lrem(keys.processingList, 1, event.id);
+    multi.publish(keys.processingListPickSuccess, event.id);
+    await multi.exec();
 }
 
 function mockCheckerFailure() {
@@ -52,8 +55,7 @@ function mockCheckerFailure() {
 async function subscribe(topic) {
     this.redis.sadd(keys.subscribersList(topic), keys.microserviceName);
     if (this.checker)
-        this.checker.send(keys.processingListTopicNotif);
-    // checker.send(topic);
+        this.checker.send(keys.processingListPick);
     this.sub.subscribe(topic);
 }
 
