@@ -17,9 +17,9 @@ It's really easy to integrate and use it but a good scalability it's not assured
 ## How it works
 Each subscriber to a certain topic subscribes using RedisEvents to that topic.
 
-When `broker.publishEvent(event)` is called RedisEventBroker fetch every subscriber of that event's topic and push atomically the serialized event to every subscriber's *publishedList* and publish a redis event with the topic name as a message.
+When `redisEventBroker.publishEvent(event)` is called RedisEventBroker fetch every subscriber of that event's topic and push atomically the serialized event to every subscriber's *publishedList* and publish a redis event with the topic name as a message.
 
-Each subscriber, receiveing a new redis event, calls `broker.pick(cb)` processing the event in the callback function.
+Each subscriber, receiveing a new redis event, calls `redisEventBroker.pick(cb)` processing the event in the callback function.
 
 The "event picking" is done atomically and consists of:
 - Removing the first event from the *publishedList* and pushing it in the *processingList*
@@ -35,21 +35,21 @@ This is achieved because on the *processingNotification* event, each instance of
 Run: `npm install redis-event-broker --save`
 
 ## How to use it
+
+**Important note:** in order to publish and pick the events in the right lists it's required that `process.env.MICROSERVICE_NAME` environment variable is initialized. Otherwise this module will throw an error.
+
 ### Require
 ```js
-const RedisEventBroker = require('redis-event-broker');
-const broker = RedisEventBroker();
+const redisEventBroker = require('redis-event-broker');
 ```
 The module create a new forked process (called *checker process*) responsible to check that lost events in *processing* state are re-enqued in the *publishedList*.
-
-`RedisEventBroker` function takes a `config` object argument. For now it's only used for testing purposes, but in the future will provide more configuration options.
 
 **Note:** every time the function `RedisEventBroker` is called no new instances of redis client are created and no new *checker processes* are created.
 
 ### Event publishing
 To publish an event:
 ```js
-broker.publishEvent(event);
+redisEventBroker.publishEvent(event);
 ```
 The `event` object must have the following fields:
 - id
@@ -58,19 +58,19 @@ The `event` object must have the following fields:
 ### Event picking
 To pick an event:
 ```js
-broker.pick(cb);
+redisEventBroker.pick(cb);
 ```
 
 ### Topic subscription
 To subscribe to a new topic:
 ```js
-broker.subscribe(topic);
+redisEventBroker.subscribe(topic);
 ```
 
 ### Topic's "new event" event handling
 To react to a new event of `topic`:
 ```js
-broker.on(topic, cb);
+redisEventBroker.on(topic, cb);
 ```
 
 ## Todo
