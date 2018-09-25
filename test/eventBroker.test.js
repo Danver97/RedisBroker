@@ -1,14 +1,16 @@
 const assert = require('assert');
-const sub = require('ioredis').createClient();
-const redis = require('ioredis').createClient();
+const Ioredis = require('ioredis'); 
+const sub = new Ioredis();
+const redis = new Ioredis();
 
 process.env.MICROSERVICE_NAME = 'abc';
 
 const config = { NODE_ENV: 'test' };
 const broker = require('../src/broker')(config);
-const redisEventBroker = broker;
-let redisEventBroker2 = new (broker.EventBroker)();
 const keys = require('../src/keys');
+
+const redisEventBroker = broker;
+const redisEventBroker2 = new (broker.EventBroker)();
 
 const checkerWaitTime = 1400;
 const renqueueWaitTime = 120;

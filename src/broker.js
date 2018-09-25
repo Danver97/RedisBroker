@@ -1,18 +1,14 @@
 const Path = require('path');
-const ioredis = require('ioredis');
-const redis = require('ioredis').createClient();
-const sub = require('ioredis').createClient();
+const Ioredis = require('ioredis');
 const childProcess = require('child_process');
 const ioredisUtil = require('./lib/ioredisUtil');
 const keys = require('./keys');
 const Event = require('./event');
 
-const pickAndPublishPicked = 'local eventId = redis.call("rpoplpush", KEYS[1], KEYS[2]) if eventId then local event = redis.call("hgetall", eventId) if event then redis.call("publish", KEYS[3], eventId) return event end end return 0';
+let redis;
+let sub;
 
-redis.defineCommand('pickPublishAndReturn', {
-    numberOfKeys: 3,
-    lua: pickAndPublishPicked,
-});
+const pickAndPublishPicked = 'local eventId = redis.call("rpoplpush", KEYS[1], KEYS[2]) if eventId then local event = redis.call("hgetall", eventId) if event then redis.call("publish", KEYS[3], eventId) return event end end return 0';
 
 function getChecker(env) {
     return childProcess.fork(Path.resolve(__dirname, './checker.js'), { env });
@@ -85,11 +81,12 @@ function removeListener(listener) {
 }
 
 class EventBroker {
-    constructor(notFork) {
+    constructor(config, notFork) {
+        const conf = config || {};
         if (!notFork)
             this.checker = getChecker(chekerEnv);
-        this.redis = ioredis.createClient();
-        this.sub = ioredis.createClient();
+        this.redis = Ioredis.createClient(conf.redisOptions);
+        this.sub = Ioredis.createClient(conf.redisOptions);
         this.redis.defineCommand('pickPublishAndReturn', {
             numberOfKeys: 3,
             lua: pickAndPublishPicked,
@@ -134,6 +131,26 @@ class EventBroker {
 
 function exportEventBrokerObject(config) {
     const conf = config || {};
+    if (!conf.redisOptions) {
+        globalSelf.redis = new Ioredis();
+        globalSelf.sub = new Ioredis();
+        redis = globalSelf.redis;
+        sub = globalSelf.sub;
+    }
+    if (!redis) {
+        globalSelf.redis = new Ioredis(conf.redisOptions);
+        redis = globalSelf.redis;
+    }
+    if (!sub) {
+        globalSelf.sub = new Ioredis(conf.redisOptions);
+        sub = globalSelf.sub;
+    }
+    if (!redis.pickPublishAndReturn) {
+        globalSelf.redis.defineCommand('pickPublishAndReturn', {
+            numberOfKeys: 3,
+            lua: pickAndPublishPicked,
+        });
+    }
     return {
         brokerClient: redis,
         publishEvent: publishEvent.bind(globalSelf),
