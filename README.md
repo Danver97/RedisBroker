@@ -103,7 +103,15 @@ redisEventBroker.onNotification(() => {
 
 emitter.on('topic1:entityCreated', (event) => {});
 emitter.on('topic2:entityCreated', (event) => {});
+
+// Don't to this:
+emitter.on('topic3:entityCreated', (event) => {
+    setImmediate(() => {
+        // Do stuff...
+    });
+});
 ```
+Since EventEmitter callbacks are called syncronously everything is ok for the pick callback.
 
 ## Todo
 - Nothing to do (for now).
