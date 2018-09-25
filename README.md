@@ -61,6 +61,8 @@ To pick an event:
 redisEventBroker.pick(cb);
 ```
 
+**Note:** every asyncronous job in the callback must be awaited or returned in a promise. Otherwise on unsuccessful async processing the event will be handled as successful.
+
 ### Topic subscription
 To subscribe to a new topic:
 ```js
