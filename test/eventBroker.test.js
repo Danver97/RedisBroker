@@ -22,12 +22,16 @@ function wait(ms) {
 describe('Redis eventBroker unit test', function () {
     const eventProva = {
         id: '11111',
+        streamId: '15',
         topic: 'provaEvent',
+        message: 'createEvent',
         payload: 'thispayload',
     };
     const eventProva2 = {
         id: '11112',
+        streamId: '15',
         topic: 'provaEvent',
+        message: 'createEvent2',
         payload: 'thispayload',
     };
     const subscriber = 'firstSubscriber';

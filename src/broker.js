@@ -3,8 +3,9 @@ const ioredis = require('ioredis');
 const redis = require('ioredis').createClient();
 const sub = require('ioredis').createClient();
 const childProcess = require('child_process');
-const keys = require('./keys');
 const ioredisUtil = require('./lib/ioredisUtil');
+const keys = require('./keys');
+const Event = require('./event');
 
 const pickAndPublishPicked = 'local eventId = redis.call("rpoplpush", KEYS[1], KEYS[2]) if eventId then local event = redis.call("hgetall", eventId) if event then redis.call("publish", KEYS[3], eventId) return event end end return 0';
 
@@ -26,13 +27,14 @@ const globalSelf = {
     sub,
 };
 
-async function publishEvent(event) {
+async function publishEvent(e) {
+    const event = Event.fromObject(e);
     const subscribers = await this.redis.smembers(keys.subscribersList(event.topic));
     const multi = this.redis.multi();
     multi.hmset(event.id, ioredisUtil.flattenObject(event));
     for (let i = 0; i < subscribers.length; i++)
         multi.lpush(keys.subscriberPublishedList(subscribers[i]), event.id);
-    multi.publish(event.topic, event.topic);
+    multi.publish(event.topic, event.message);
     const result = await multi.exec();
     return result;
 }
@@ -41,7 +43,9 @@ async function pick(cb) {
     const event = ioredisUtil.buildObject(
         await this.redis.pickPublishAndReturn(keys.publishedList, keys.processingList, keys.processingListPick),
     );
-    cb(event);
+    const callbackPromise = cb(event);
+    if (callbackPromise && callbackPromise instanceof Promise)
+        await Promise.all([callbackPromise]);
     const multi = this.redis.multi();
     multi.lrem(keys.processingList, 1, event.id);
     multi.publish(keys.processingListPickSuccess, event.id);
@@ -59,8 +63,10 @@ async function subscribe(topic) {
     this.sub.subscribe(topic);
 }
 
-function on(topic, cb) {
-    this.sub.on(topic, cb);
+function onNotification(cb) {
+    this.sub.on('message', (ch, message) => {
+        cb(ch, message);
+    });
 }
 
 class EventBroker {
@@ -91,7 +97,7 @@ class EventBroker {
     }
 
     on(pubSubEvent, cb) {
-        const func = on.bind(this);
+        const func = onNotification.bind(this);
         return func(pubSubEvent, cb);
     }
 
@@ -107,7 +113,7 @@ function exportEventBrokerObject(config) {
         brokerClient: redis,
         publishEvent: publishEvent.bind(globalSelf),
         subscribe: subscribe.bind(globalSelf),
-        on: on.bind(globalSelf),
+        onNotification: onNotification.bind(globalSelf),
         pick: pick.bind(globalSelf),
         EventBroker: conf.NODE_ENV === 'test' ? EventBroker : undefined,
         mockCheckerFailure: conf.NODE_ENV === 'test' ? mockCheckerFailure.bind(globalSelf) : undefined,

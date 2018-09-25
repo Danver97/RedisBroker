@@ -68,10 +68,40 @@ redisEventBroker.subscribe(topic);
 ```
 
 ### Topic's "new event" event handling
-To react to a new event of `topic`:
+To react to a new event notification:
 ```js
-redisEventBroker.on(topic, cb);
+redisEventBroker.onNotification(cb);
+```
+
+You can combine `redisEventBroker.onNotification` with `redisEventBroker.pick`, to pick new messages on notification (let's call it *picking on notification* from now on).
+
+#### Example
+```js
+redisEventBroker.onNotification(() => {
+    redisEventBroker.pick((event) => {
+        if (event.topic === first_topic) {
+            // Do stuff...
+        } else if (event.topic === second_topic) {
+            // Do other stuff...
+        }
+    });
+});
+```
+
+Currently is not possible to register callbacks based on events topics and messages. If you don't like to have a big if-else tree you can:
+
+```js
+const emitter = new (require('events'))();
+
+redisEventBroker.onNotification(() => {
+    redisEventBroker.pick((event) => {
+        emitter.emit(`${event.topic}:${event.message}`, event);
+    });
+});
+
+emitter.on('topic1:entityCreated', (event) => {});
+emitter.on('topic2:entityCreated', (event) => {});
 ```
 
 ## Todo
-- Nothing to do.
+- Nothing to do (for now).
