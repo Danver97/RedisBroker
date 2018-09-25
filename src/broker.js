@@ -22,6 +22,7 @@ const chekerEnv = { MICROSERVICE_NAME: keys.microserviceName };
 const checker = getChecker(chekerEnv);
 
 const globalSelf = {
+    name: 'global',
     checker,
     redis,
     sub,
@@ -52,8 +53,16 @@ async function pick(cb) {
     await multi.exec();
 }
 
-function mockCheckerFailure() {
+function mockCheckerFailure(nofail) {
+    if (nofail) {
+        this.checker.send('nofail');
+        return;
+    }
     this.checker.send('fail');
+}
+
+function toggleCheckerLogs() {
+    this.checker.send('logs');
 }
 
 async function subscribe(topic) {
@@ -64,9 +73,15 @@ async function subscribe(topic) {
 }
 
 function onNotification(cb) {
+    // this.sub.on('message', cb);
     this.sub.on('message', (ch, message) => {
+        console.log('call');
         cb(ch, message);
     });
+}
+
+function removeListener(listener) {
+    this.sub.removeListener('message', listener);
 }
 
 class EventBroker {
@@ -96,13 +111,23 @@ class EventBroker {
         return func(topic);
     }
 
-    on(pubSubEvent, cb) {
+    onNotification(cb) {
         const func = onNotification.bind(this);
-        return func(pubSubEvent, cb);
+        return func(cb);
+    }
+
+    removeListener(listener) {
+        const func = removeListener.bind(this);
+        return func(listener);
     }
 
     mockCheckerFailure() {
         const func = mockCheckerFailure.bind(this);
+        return func();
+    }
+
+    toggleCheckerLogs() {
+        const func = toggleCheckerLogs.bind(this);
         return func();
     }
 }
@@ -117,6 +142,8 @@ function exportEventBrokerObject(config) {
         pick: pick.bind(globalSelf),
         EventBroker: conf.NODE_ENV === 'test' ? EventBroker : undefined,
         mockCheckerFailure: conf.NODE_ENV === 'test' ? mockCheckerFailure.bind(globalSelf) : undefined,
+        toggleCheckerLogs: conf.NODE_ENV === 'test' ? toggleCheckerLogs.bind(globalSelf) : undefined,
+        removeListener: conf.NODE_ENV === 'test' ? removeListener.bind(globalSelf) : undefined,
     };
 }
 

@@ -3,6 +3,7 @@ const sub = require('ioredis').createClient();
 const keys = require('./keys');
 
 let failInTestEnv = false;
+let logs = false;
 const renqueueIfPresent = 'local count = redis.call("lrem", KEYS[1], 1, KEYS[4]) if count == 1 then redis.call("rpush", KEYS[2], KEYS[4]) redis.call("zrem", KEYS[3], KEYS[4]) redis.call("publish", KEYS[2], KEYS[4]) return 1 end return 0';
 
 redis.defineCommand('renqueueIfPresent', {
@@ -33,7 +34,7 @@ async function strategy1(ch, message) {
 */
 
 async function strategy2(ch, message) {
-    // console.log('\tchecker!');
+    // if (logs) console.log('\tchecker!');
     if (ch === keys.processingListPick) {
         await redis.zadd(keys.processingListSS, Date.now(), message);
         timeouts[message] = setTimeout(async () => {
@@ -41,9 +42,9 @@ async function strategy2(ch, message) {
                 if (failInTestEnv)
                     throw new Error('Mocked failure!');
                 const result = await redis.renqueueIfPresent(keys.processingList, keys.publishedList, keys.processingListSS, message);
-                console.log(`\texecuted ${result} pid: ${process.pid}`);
+                if (logs) console.log(`\texecuted ${result} pid: ${process.pid}`);
             } catch (e) {
-                console.log(`\tchecker pid: ${process.pid} Mocked failure`);
+                if (logs) console.log(`\tchecker pid: ${process.pid} Mocked failure`);
             }
         }, 100);
     } else if (ch === keys.processingListPickSuccess)
@@ -55,6 +56,11 @@ sub.on('message', strategy2);
 process.on('message', async topic => {
     if (topic === 'fail')
         failInTestEnv = true;
-    else 
+    else if (topic === 'nofail')
+        failInTestEnv = false;
+    else if (topic === 'logs') {
+        logs = !logs;
+        // console.log(process.pid + ' logs: ' + logs);
+    } else 
         await sub.subscribe(topic);
 });

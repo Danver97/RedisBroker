@@ -5,8 +5,9 @@ const redis = require('ioredis').createClient();
 process.env.MICROSERVICE_NAME = 'abc';
 
 const config = { NODE_ENV: 'test' };
-const redisEventBroker = require('../src/broker')(config);
-const redisEventBroker2 = new ((require('../src/broker'))(config).EventBroker)();
+const broker = require('../src/broker')(config);
+const redisEventBroker = broker;
+let redisEventBroker2 = new (broker.EventBroker)();
 const keys = require('../src/keys');
 
 const checkerWaitTime = 1400;
@@ -18,6 +19,9 @@ function wait(ms) {
     while (now - start < ms)
         now = Date.now();
 }
+
+redisEventBroker.toggleCheckerLogs();
+redisEventBroker2.toggleCheckerLogs();
 
 describe('Redis eventBroker unit test', function () {
     const eventProva = {
@@ -96,6 +100,7 @@ describe('Redis eventBroker unit test', function () {
             // console.log('subscribed');
         });
         
+        
         it('check if event is renqued on failure', async function() {
             const prom1 = redisEventBroker.subscribe(eventProva.topic);
             const prom2 = redisEventBroker2.subscribe(eventProva.topic);
@@ -110,7 +115,7 @@ describe('Redis eventBroker unit test', function () {
             wait(50);
             try {
                 // Fails and leave an unprocessed message in the processingList.
-                await redisEventBroker2.pick(() => {
+                await redisEventBroker2.pick(async () => {
                     throw new Error('Mocked failure!');
                 });
             } catch (e) {
@@ -124,3 +129,6 @@ describe('Redis eventBroker unit test', function () {
         });
     });
 });
+
+/*
+*/
