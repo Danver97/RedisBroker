@@ -54,6 +54,7 @@ redisEventBroker.publishEvent(event);
 The `event` object must have the following fields:
 - `streamId`
 - `topic`
+
 Other optional fields:
 - `message`
 - `payload`
