@@ -76,6 +76,16 @@ function onNotification(cb) {
     });
 }
 
+function pickOnNotification(cb) {
+    const functionPick = function () {
+        pick(event => {
+            cb(event);
+        });
+    };
+    onNotification(functionPick);
+    return functionPick;
+}
+
 function removeListener(listener) {
     this.sub.removeListener('message', listener);
 }
@@ -110,6 +120,11 @@ class EventBroker {
 
     onNotification(cb) {
         const func = onNotification.bind(this);
+        return func(cb);
+    }
+    
+    pickOnNotification(cb) {
+        const func = pickOnNotification.bind(this);
         return func(cb);
     }
 
@@ -156,6 +171,7 @@ function exportEventBrokerObject(config) {
         publishEvent: publishEvent.bind(globalSelf),
         subscribe: subscribe.bind(globalSelf),
         onNotification: onNotification.bind(globalSelf),
+        pickOnNotification: pickOnNotification.bind(globalSelf),
         pick: pick.bind(globalSelf),
         EventBroker: conf.NODE_ENV === 'test' ? EventBroker : undefined,
         mockCheckerFailure: conf.NODE_ENV === 'test' ? mockCheckerFailure.bind(globalSelf) : undefined,
