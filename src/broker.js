@@ -78,11 +78,11 @@ function onNotification(cb) {
 
 function pickOnNotification(cb) {
     const functionPick = function () {
-        pick(event => {
+        (pick.bind(this))(event => {
             cb(event);
         });
     };
-    onNotification(functionPick);
+    (onNotification.bind(this))(functionPick.bind(this));
     return functionPick;
 }
 
