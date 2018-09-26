@@ -40,7 +40,7 @@ Run: `npm install redis-event-broker --save`
 
 ### Require
 ```js
-const redisEventBroker = require('redis-event-broker');
+const redisEventBroker = require('redis-event-broker')();
 ```
 The module create a new forked process (called *checker process*) responsible to check that lost events in *processing* state are re-enqued in the *publishedList*.
 

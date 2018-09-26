@@ -1,5 +1,6 @@
 const assert = require('assert');
 const Ioredis = require('ioredis'); 
+
 const sub = new Ioredis();
 const redis = new Ioredis();
 
@@ -44,12 +45,12 @@ describe('Redis eventBroker unit test', function () {
     const microserviceName = 'abc';
     const subscribers = [subscriber, microserviceName];
     
-    context('Single instance', function() {
+    context('Single instance', function () {
         sub.subscribe(eventProva.topic, () => {
             // console.log('subscribed');
         });
         
-        it('check if event added', async function() {
+        it('check if event added', async function () {
             // Reset db and inizialize subscribers
             await redisEventBroker.subscribe(eventProva.topic);
             await redis.flushall();
@@ -61,22 +62,21 @@ describe('Redis eventBroker unit test', function () {
             const result = await redisEventBroker.publishEvent(eventProva);
             
             // Start asserting
-            for (let i = 1; i < subscribers.length + 1; i++) {
+            for (let i = 1; i < subscribers.length + 1; i++)
                 assert.strictEqual(result[i][1], 1);
-            }
             const published = await redis.lrange(keys.subscriberPublishedList(subscriber), -1, -1);
             const event = await redis.hgetall(published);
             assert.strictEqual(published[0], eventProva.id);
             assert.deepStrictEqual(event, eventProva);
         });
         
-        it('check if event picked', async function() {
+        it('check if event picked', async function () {
             await redisEventBroker.pick(event => {
                 assert.deepStrictEqual(event, eventProva);
             });
         });
         
-        it('check if event is renqued on failure', async function() {
+        it('check if event is renqued on failure', async function () {
             wait(checkerWaitTime);
             await redisEventBroker.publishEvent(eventProva);
             try {
@@ -97,13 +97,13 @@ describe('Redis eventBroker unit test', function () {
         });
     });
     
-    context('Multi instance', function() {
+    context('Multi instance', function () {
         sub.subscribe(eventProva.topic, () => {
             // console.log('subscribed');
         });
         
         
-        it('check if event is renqued on failure', async function() {
+        it('check if event is renqued on failure', async function () {
             const prom1 = redisEventBroker.subscribe(eventProva.topic);
             const prom2 = redisEventBroker2.subscribe(eventProva.topic);
             await Promise.all([prom1, prom2]);
