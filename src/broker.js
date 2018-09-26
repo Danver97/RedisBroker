@@ -72,7 +72,6 @@ async function subscribe(topic) {
 function onNotification(cb) {
     // this.sub.on('message', cb);
     this.sub.on('message', (ch, message) => {
-        console.log('call');
         cb(ch, message);
     });
 }
