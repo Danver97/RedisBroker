@@ -52,8 +52,11 @@ To publish an event:
 redisEventBroker.publishEvent(event);
 ```
 The `event` object must have the following fields:
-- id
-- topic
+- `streamId`
+- `topic`
+Other optional fields:
+- `message`
+- `payload`
 
 ### Event picking
 To pick an event:
@@ -112,6 +115,26 @@ emitter.on('topic3:entityCreated', (event) => {
 });
 ```
 Since EventEmitter callbacks are called syncronously everything is ok for the pick callback.
+
+### *Picking on notification*
+From `1.3.x` you can get new event on notification like this:
+```js
+redisEventBroker.pickOnNotification(event => {
+    // Do stuff...
+})
+```
+
+#### Example
+```js
+const emitter = new (require('events'))();
+
+redisEventBroker.pickOnNotification(event => {
+    emitter.emit(`${event.topic}:${event.message}`, event);
+});
+
+emitter.on('topic1:entityCreated', (event) => {});
+emitter.on('topic2:entityCreated', (event) => {});
+```
 
 ## Todo
 - Nothing to do (for now).
