@@ -13,6 +13,11 @@ function buildObject(array) {
     const obj = {};
     for (let i = 1; i < array.length; i += 2)
         obj[array[i - 1]] = array[i];
+    try {
+        obj.payload = JSON.parse(payload);
+    } catch (e) {
+        
+    }
     return obj;
 }
 

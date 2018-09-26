@@ -9,6 +9,8 @@ class Event {
         this.topic = topic;
         this.message = message;
         this.payload = payload;
+        if (typeof this.payload === 'object')
+            this.payload = JSON.stringify(this.payload);
     }
     
     static fromObject(eventObj) {
