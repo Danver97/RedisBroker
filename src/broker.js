@@ -62,10 +62,11 @@ function toggleCheckerLogs() {
 }
 
 async function subscribe(topic) {
-    this.redis.sadd(keys.subscribersList(topic), keys.microserviceName);
+    const addToSubscribersList = this.redis.sadd(keys.subscribersList(topic), keys.microserviceName);
     if (this.checker)
         this.checker.send(keys.processingListPick);
-    this.sub.subscribe(topic);
+    const subscribeCommand = this.sub.subscribe(topic);
+    await Promise.all([addToSubscribersList, subscribeCommand]);
 }
 
 function onNotification(cb) {
