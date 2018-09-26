@@ -14,10 +14,8 @@ function buildObject(array) {
     for (let i = 1; i < array.length; i += 2)
         obj[array[i - 1]] = array[i];
     try {
-        obj.payload = JSON.parse(payload);
-    } catch (e) {
-        
-    }
+        obj.payload = JSON.parse(obj.payload);
+    } catch (e) {}
     return obj;
 }
 

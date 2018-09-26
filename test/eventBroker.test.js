@@ -32,7 +32,7 @@ describe('Redis eventBroker unit test', function () {
         streamId: '15',
         topic: 'provaEvent',
         message: 'createEvent',
-        payload: 'thispayload',
+        payload: { ciao: 'objPayload' },
     };
     const eventProva2 = {
         id: '11112',
@@ -67,12 +67,15 @@ describe('Redis eventBroker unit test', function () {
             const published = await redis.lrange(keys.subscriberPublishedList(subscriber), -1, -1);
             const event = await redis.hgetall(published);
             assert.strictEqual(published[0], eventProva.id);
+            try {
+                event.payload = JSON.parse(event.payload);
+            } catch (e) {}
             assert.deepStrictEqual(event, eventProva);
         });
         
         it('check if event picked', async function () {
             await redisEventBroker.pick(event => {
-                assert.deepStrictEqual(event, eventProva);
+                assert.strictEqual(JSON.stringify(event), JSON.stringify(eventProva));
             });
         });
         
