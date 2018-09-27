@@ -15,7 +15,7 @@ function getChecker(env) {
 }
 
 const chekerEnv = { MICROSERVICE_NAME: keys.microserviceName };
-const checker = getChecker(chekerEnv);
+let checker;
 
 const globalSelf = {
     name: 'global',
@@ -146,6 +146,8 @@ class EventBroker {
 
 function exportEventBrokerObject(config) {
     const conf = config || {};
+    checker = getChecker(chekerEnv);
+    globalSelf.checker = checker;
     if (!conf.redisOptions) {
         globalSelf.redis = new Ioredis();
         globalSelf.sub = new Ioredis();
