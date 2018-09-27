@@ -54,7 +54,14 @@ async function strategy2(ch, message) {
 sub.on('message', strategy2);
 
 process.on('message', async topic => {
-    if (topic === 'fail')
+    if (topic === 'connect') {
+        const prom1 = redis.connect();
+        const prom2 = sub.connect();
+        await Promise.all([prom1, prom2]);
+    } else if (topic === 'disconnect') {
+        redis.disconnect();
+        sub.disconnect();
+    } else if (topic === 'fail')
         failInTestEnv = true;
     else if (topic === 'nofail')
         failInTestEnv = false;

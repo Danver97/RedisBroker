@@ -133,6 +133,21 @@ describe('Redis eventBroker unit test', function () {
             }
         });
     });
+    
+    context('Disconnect & Reconnect', function () {
+        it('test disconnection', function () {
+            redisEventBroker.disconnect();
+        });
+        
+        it('test reconnection', function () {
+            redisEventBroker.connect();
+        });
+    });
+    
+    after(() => {
+        redis.disconnect();
+        sub.disconnect();
+    })
 });
 
 /*

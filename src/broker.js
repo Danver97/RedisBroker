@@ -90,6 +90,18 @@ function removeListener(listener) {
     this.sub.removeListener('message', listener);
 }
 
+async function connect() {
+    this.checker.send('connect');
+    await this.redis.connect();
+    await this.sub.connect();
+}
+
+function disconnect() {
+    this.checker.send('disconnect');
+    this.redis.disconnect();
+    this.sub.disconnect();
+}
+
 class EventBroker {
     constructor(config, notFork) {
         const conf = config || {};
@@ -142,6 +154,16 @@ class EventBroker {
         const func = toggleCheckerLogs.bind(this);
         return func();
     }
+    
+    connect() {
+        const func = connect.bind(this);
+        return func();
+    }
+    
+    disconnect() {
+        const func = disconnect.bind(this);
+        return func();
+    }
 }
 
 function exportEventBrokerObject(config) {
@@ -175,6 +197,8 @@ function exportEventBrokerObject(config) {
         onNotification: onNotification.bind(globalSelf),
         pickOnNotification: pickOnNotification.bind(globalSelf),
         pick: pick.bind(globalSelf),
+        connect: connect.bind(globalSelf),
+        disconnect: disconnect.bind(globalSelf),
         EventBroker: conf.NODE_ENV === 'test' ? EventBroker : undefined,
         mockCheckerFailure: conf.NODE_ENV === 'test' ? mockCheckerFailure.bind(globalSelf) : undefined,
         toggleCheckerLogs: conf.NODE_ENV === 'test' ? toggleCheckerLogs.bind(globalSelf) : undefined,
