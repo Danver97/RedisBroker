@@ -99,6 +99,7 @@ async function connect() {
 function disconnect() {
     this.checker.send('disconnect');
     this.redis.disconnect();
+    this.sub.unsubscribe();
     this.sub.disconnect();
 }
 
@@ -165,6 +166,10 @@ class EventBroker {
         return func();
     }
 }
+
+process.on('exit', () => {
+    (disconnect.bind(globalSelf))();
+});
 
 function exportEventBrokerObject(config) {
     const conf = config || {};
