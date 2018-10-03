@@ -1,7 +1,7 @@
 # RedisEventBroker
 A simple redis event broker implementation.
 
-This event broker is thought to be used in an event sourcing evironment. It should be used as a module inside a microservice application.
+This event broker is thought to be used in an disributed evironment. It should be used as a module inside a microservice application.
 This means that to be effective and fault tolerant needs multiple instaces of the microservice application that it's using it.
 
 ### Advantages
