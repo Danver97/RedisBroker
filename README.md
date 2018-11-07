@@ -6,7 +6,7 @@ This means that to be effective and fault tolerant needs multiple instaces of th
 
 ### Advantages
 - No need to deploy and manage another dedicated service which works as an event broker manager.
-- Fault tolerance stricly related to the fault tolerance of the microservice which is using it.
+- Fault tolerance stricly related to the fault tolerance of the microservice which is using it and the redis server.
 
 ### Drawbacks
 - Not recommend for really large instaces number and very-intensive event communication 
